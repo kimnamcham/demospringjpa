@@ -1,0 +1,23 @@
+package com.example.demojpa.repository;
+
+import com.example.demojpa.entity.Mobile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+@Repository
+public interface MobileRepository extends JpaRepository<Mobile, Long> {
+
+    @Query(nativeQuery = true, value = "SELECT c FROM Mobile c WHERE c.createdTime BETWEEN (:dateFrom, :dateTo)")
+    List<Mobile> getListMobileFromDate(@Param("dateFrom")Timestamp dateFrom, @Param("dateTo")Timestamp dateTo);
+
+    Mobile findByActiveEqualsAndTypeEquals(int active, int type);
+
+    List<Mobile> findAllByActiveEqualsAndTypeEquals(int active, int type);
+
+
+}
