@@ -24,16 +24,6 @@ import static org.springframework.http.HttpStatus.OK;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CustomExceptionHandler {
 
-//    @ResponseStatus(BAD_REQUEST)
-//    @ResponseBody
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public Error methodArgumentNotValidException(MethodArgumentNotValidException ex) {
-//        BindingResult result = ex.getBindingResult();
-//        List<FieldError> fieldErrors = result.getFieldErrors();
-//        return processFieldErrors(fieldErrors);
-//    }
-//
-
     @ResponseStatus(OK)
     @ResponseBody
     @ExceptionHandler(value = {MethodArgumentNotValidException.class})
