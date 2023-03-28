@@ -1,7 +1,7 @@
 package com.example.demojpa.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.example.demojpa.constant.ErrorCodeDefs;
+import com.example.demojpa.response.BaseResponse;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.OK;
 
 
@@ -27,66 +26,56 @@ public class CustomExceptionHandler {
     @ResponseStatus(OK)
     @ResponseBody
     @ExceptionHandler(value = {MethodArgumentNotValidException.class})
-    public MyCustomError methodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public BaseResponse methodArgumentNotValidException(MethodArgumentNotValidException ex) {
         BindingResult result = ex.getBindingResult();
         List<FieldError> fieldErrors = result.getFieldErrors();
-        return processFieldErrors(fieldErrors);
+        BaseResponse response = BaseResponse.builder()
+                .success(false)
+                .error(processFieldErrors(fieldErrors))
+                .build();
+        return response;
     }
+
 
     @ResponseStatus(OK)
     @ResponseBody
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public MyCustomError notReadableExceptionHandle(HttpMessageNotReadableException ex) {
-        return new MyCustomError(500, ex.getMessage());
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public BaseResponse notReadableExceptionHandle(HttpMessageNotReadableException ex) {
+        return BaseResponse.builder().success(false).error(
+                        BaseResponse.Error.builder()
+                                .code(ErrorCodeDefs.VALIDATION_ERROR)
+                                .message(ErrorCodeDefs.getErrMsg(ErrorCodeDefs.VALIDATION_ERROR))
+                                .build()
+                )
+                .build();
     }
 
     @ResponseStatus(OK)
     @ResponseBody
     @ExceptionHandler(value = {Exception.class})
-    public MyCustomError methodArgumentNotValidException(Exception ex) {
-        return new MyCustomError(500, ex.getMessage());
+    public BaseResponse methodArgumentNotValidException(Exception ex) {
+        BaseResponse response = new BaseResponse();
+        response.setFailed(ErrorCodeDefs.SERVER_ERROR, ex.getMessage());
+        return response;
     }
 
-    private MyCustomError processFieldErrors(List<FieldError> fieldErrors) {
-        MyCustomError error = new MyCustomError(BAD_REQUEST.value(), "validation error");
+    private BaseResponse.Error processFieldErrors(List<FieldError> fieldErrors) {
+        BaseResponse.Error error = BaseResponse.Error.builder()
+                .code(ErrorCodeDefs.VALIDATION_ERROR)
+                .message(ErrorCodeDefs.getErrMsg(ErrorCodeDefs.VALIDATION_ERROR))
+                .build();
+        List<BaseResponse.ErrorDetail> errorDetailList = new ArrayList<>();
         for (FieldError fieldError : fieldErrors) {
-            error.addFieldError(fieldError.getField(), fieldError.getDefaultMessage());
+            BaseResponse.ErrorDetail errorDetail = BaseResponse.ErrorDetail.builder()
+                    .id(fieldError.getField())
+                    .message(fieldError.getDefaultMessage())
+                    .build();
+            errorDetailList.add(errorDetail);
         }
+        error.setErrorDetailList(errorDetailList);
         return error;
     }
 
-    static class MyCustomError {
-        private final int status;
-        private final String message;
-        private List<DetailError> fieldErrors = new ArrayList<>();
-
-        MyCustomError(int status, String message) {
-            this.status = status;
-            this.message = message;
-        }
-
-        public int getStatus() {
-            return status;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void addFieldError(String fieldName, String message) {
-            DetailError error = new DetailError(fieldName, message);
-            fieldErrors.add(error);
-        }
-
-        public List<DetailError> getFieldErrors() {
-            return fieldErrors;
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class DetailError {
-        private String field;
-        private String message;
-    }
 }

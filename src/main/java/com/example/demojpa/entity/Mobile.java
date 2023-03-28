@@ -1,20 +1,18 @@
 package com.example.demojpa.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
-
 import java.sql.Timestamp;
 
-import static javax.persistence.GenerationType.IDENTITY;
+import static javax.persistence.GenerationType.*;
 
 @Table(name = "mobile")
 @Entity
-
-@Data
+@Setter
+@Getter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -29,8 +27,11 @@ public class Mobile {
     private String description;
 
     @Column(name = "created_time")
-    private Timestamp createdTime ;
+    private Timestamp createdTime;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "cart_id", nullable = false) // thông qua khóa ngoại cart_id
+    private Cart cart;
 
     private int type = 1;
     private int active = 0;
